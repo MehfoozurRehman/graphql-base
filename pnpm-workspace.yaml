@@ -1,0 +1,8 @@
+allowBuilds:
+  '@apollo/protobufjs': set this to true or false
+  bcrypt: true
+  core-js: true
+  core-js-pure: true
+  nodemon: set this to true or false
+  protobufjs: true
+  yarn: set this to true or false
