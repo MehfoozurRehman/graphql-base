@@ -6,13 +6,13 @@
   "author": "tuancnttbk93@gmail.com",
   "license": "ISC",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "node api.js && ts-node-dev --respawn --transpile-only src/index.ts",
     "lint": "eslint . --ext .ts",
     "lint:auto-fix": "eslint . --ext .ts --quiet --fix",
     "build:ts": "tsc",
     "build:clean": "rimraf ./dist",
-    "build": "npm run build:clean && npm run build:ts",
-    "start": "node dist/index.js",
+    "build": "node api.js && npm run build:clean && npm run build:ts",
+    "start": "node api.js && node dist/index.js",
     "create-schema": "graphql codegen",
     "create-types": "graphql-schema-typescript --namespace=GQL --global=true --typePrefix='' generate-ts --output=src/__typedefs/graphqlTypes.d.ts src/__typedefs",
     "generate-typedefs": "npm run create-schema && npm run create-types"
