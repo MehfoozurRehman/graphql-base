@@ -1,119 +1,42 @@
-# GraphQL + Clean Architectire boilerplate
+# GraphQL + Clean Architecture Boilerplate
 
-I wrote an article about this boilerplate at:
-- Medium: https://congtuanle.medium.com/graphql-clean-architectire-boilerplate-1beb07935b41
-- Or dev.to: https://dev.to/tuanlc/graphql-clean-architectire-boilerplate-hog
+A TypeScript GraphQL server skeleton that keeps auth and user logic separate from Apollo and Express.
 
-Discussion & Comments are warmly welcomed!
+**Status:** Starter. It is a reusable boilerplate: users and auth are wired through clean-architecture layers, but user data lives in an in-memory array and nothing is built on top of it yet.
 
-Feel free to send PRs to improve this repository. I hope this work will save time for you and the people in the community who are considering to adopt Graphql + Typescript + Clean Architeture.
+## The problem
 
-## Inspiration
-The [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) is an awesome guide for developers who desire to build a clean, structured and maintainable projects. The letter L in SOLID principal allows us to make depended components are easily replaced without touch to the business and the core of systems. For example of the web server where there are many frameworks out there (Expressjs, GraphQL, etc) and the chosen decision depends on the purpose of the business and the context.
+Teams starting a GraphQL API in TypeScript need a structure where business rules do not depend on the web framework, so the framework or database can change later without rewriting the core. This repo is a worked example of that layout, based on a boilerplate article by Tuan Le (linked from the original README).
 
-In this boilerplate guide scope we will go throght how to make the core business immune with the change of the detailed technologies. Let's go!
+## What it does
 
-## Boilerplate
-### Code structure
-```
-.
-├── package.json
-├── package-lock.json
-├── README.md
-├── src
-│   ├── application
-│   │   ├── auth
-│   │   │   └── index.ts
-│   │   ├── graphql
-│   │   │   ├── index.ts
-│   │   │   ├── schemaShards
-│   │   │   │   ├── index.ts
-│   │   │   │   └── users.ts
-│   │   │   ├── subscriptionManager.ts
-│   │   │   └── utils
-│   │   │       └── mergeRawSchemas.ts
-│   │   └── index.ts
-│   ├── dto
-│   │   └── user.dto.ts
-│   ├── entities
-│   │   └── user.entity.ts
-│   ├── index.ts
-│   ├── IoC
-│   │   ├── container.ts
-│   │   ├── icradle.interface.ts
-│   │   └── providers
-│   │       ├── auth.provider.ts
-│   │       └── user.provider.ts
-│   ├── persistence
-│   │   ├── auth.repository.ts
-│   │   ├── constants.ts
-│   │   ├── password.ts
-│   │   └── user.repository.ts
-│   ├── services
-│   │   ├── auth.repository.interface.ts
-│   │   ├── auth.service.ts
-│   │   ├── user.repository.interface.ts
-│   │   └── user.service.ts
-│   └── __typedefs
-│       ├── graphqlTypes.d.ts
-│       └── schema.graphql
-└── tsconfig.json
-```
+- Registers and logs in users through GraphQL operations (`registerUser`, `loginUser` in `src/__typedefs/schema.graphql`).
+- Hashes passwords with bcrypt in `src/persistence/password.ts` and checks them in `src/services/auth.service.ts`.
+- Builds the GraphQL schema from per-domain shards (`src/application/graphql/schemaShards/users.ts`) and merges them with `mergeRawSchemas.ts`.
+- Wires services and repositories through an awilix container (`src/IoC/container.ts` and its providers).
 
-The main folder is `src` where contains the implementation:
-- **application**: Application layer where we can use a backend web application framework. In this boilerplate is `GraphQL`
-- **service**: The business service layer where we defined the logic to handle application usecases. This layers also contains adapters that abstract the detailed actions, for example, access to database.
-- **entities**: This is the corest component of the application where we define the application entities.
-- **persistence**: This is another detailed layer where we specify actions to communicate to database, message queue, etc.
-- **dto**: (stand for Data Transfer Object) defines communication contracts between layers. For example, what type of input params or returned value that is used in methods of layers
-- **IoC**: (stand for Iversion of Control) is an implementation of the Dependency Injection, the letter D in the SOLID principal. Everytime you create a new Service class, or a new repository class, or a new controller, you need to register them in this container. This boilerplate uses [Awilix](https://github.com/jeffijoe/awilix) library to achieve the factor.
+## How it's built
 
-### Communication Policies
-The communication policies between layers and domains compliant with the Clean Architecture. The directions of arrows in the following diagrams show the relation between components. For example, if an arrow direction from component X to component Y, it means component X depends on the component Y.
+- TypeScript on Node, with Apollo Server 2 on Express 4.
+- awilix for dependency injection, graphql-tools for schema merging, jsonwebtoken for tokens.
+- Schema types are generated with graphql-cli and graphql-schema-typescript (`npm run generate-typedefs`).
+- Layering: `entities` and `dto` hold data shapes, `services` define repository interfaces and business logic, and `persistence` holds the concrete repositories. The services depend on the interfaces, and the IoC providers pick the implementation. That is the main decision the repo demonstrates.
 
-1. Dependency diagram
-![Dependency diagram](./docs/images/depending_diagram.png)
+## Running it locally
 
-As you can see in the diagram the dependency flow among layers:
-- Entity is the core layer and does not depend on any component
-- To inverse the dependency from the domain business layer to the repository layer, there is a repository interface in the domain business. This allows us to be able to implement and update this layer with the detailed technologies
-- Application Controller depends in the services
-- IoC container depends on services, repositories and application controllers because we need to register all of them to the container
-- Application router depends on the IoC container that allows us to use registered application controllers to handle client requests
+Install dependencies with the lockfile's package manager (`pnpm-lock.yaml` is present, so `pnpm install`).
 
-2. Dependency between domains
-![Dependency between domains diagram](./docs/images/relation_between_domains.png)
-
-In real-life projects, of course, there is not merely 1 domain. So, we need to define the communication rules between layers of them. 
-
-## Getting Started
-There are some beginning available commandlines is defined the `scripts` part of the `package.json` file.
-
-1. Install dependencies
 ```bash
-npm i
+npm run dev            # ts-node-dev with live reload, runs src/index.ts
+npm run build          # clean and compile to dist/
+npm start              # run the compiled dist/index.js
+npm run lint
 ```
 
-2. Run the application under the `dev` mode with the hot reload feature
-```bash
-npm run dev
-```
+## What's left
 
-3. Compile the application
-```bash
-npm run build
-```
-
-4. Run the applicatino under the `production` mode. You need to compile the application before
-```bash
-npm run start
-```
-
-5. Generate types for GraphQL schema. This action must be done each time you update the GraphQL schema to allow typescript compiler understand your schema:
-```bash
-npm run generate-typedefs
-```
-
-## References
-- [Node + Typescript + MongoDB GraphQL API Starter Kit](https://anthonyriera.medium.com/you-just-found-the-best-node-typescript-mongodb-graphql-api-starter-kit-1f6f53d841cb)
-- [The Clean Architecture Blog](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- Users are stored in an in-memory array (`src/persistence/user.repository.ts`), so data is lost on restart and is not shared between processes. A real database repository is missing.
+- The repo has no test suite.
+- The GraphQL schema still contains `_empty` placeholder fields in its Query and Mutation types.
+- It depends on Apollo Server 2 and Express 4, both old major versions. Apollo Server 2 is end-of-life, so upgrading is a real task before any production use.
+- The original README's Docker and deployment notes are not in this repo.
